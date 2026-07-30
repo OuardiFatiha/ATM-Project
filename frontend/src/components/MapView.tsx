@@ -3,8 +3,7 @@ import { useMapEvents } from "react-leaflet/hooks"
 import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet"
 import { useMap } from "react-leaflet/hooks"
 import type { LatLng, LocationEvent } from "leaflet"
-import { useAircraftStates } from "../hooks/useAircraftStates"
-import { aircraftIcon } from "../icons/aircraftIcon"
+import { AircraftList } from "./AircraftList"
 
 function LocationMarker() {
   const [position, setPosition] = useState<LatLng | null>(null)
@@ -41,13 +40,11 @@ function MapResizeFix() {
 }
 
 export const MapView = () => {
-  const { aircraftStates } = useAircraftStates();
-
   return (
     <MapContainer
       center={{ lat: 48.86, lng: 2.28 }}
       zoom={10}
-      scrollWheelZoom={false}
+      scrollWheelZoom={true}
       style={{ width: "100%", height: "100%", overflow: "hidden" }}
     >
       <TileLayer
@@ -56,37 +53,7 @@ export const MapView = () => {
       />
       <MapResizeFix />
       <LocationMarker />
-      {aircraftStates && aircraftStates.map((aircraft) => {
-        if (aircraft.latitude !== null && aircraft.longitude !== null) {
-          return (
-            <Marker
-              key={aircraft.icao24}
-              position={{ lat: aircraft.latitude, lng: aircraft.longitude }}
-              icon={aircraftIcon(aircraft.true_track ?? 0, aircraft.on_ground ? "green" : "purple")}
-              eventHandlers={{
-                mouseover(e) {
-                  e.target.openPopup();
-                },
-                mouseout(e) {
-                  e.target.closePopup();
-                },
-                click: () => console.log(`Clicked on aircraft: ${aircraft.icao24}`)
-              }}
-            >
-              <Popup>
-                <div>
-                  <p><strong>{aircraft.callsign || aircraft.icao24}</strong></p>
-                  <p>Country: {aircraft.origin_country}</p>
-                  <p>Altitude: {aircraft.barometric_altitude}m</p>
-                  <p>Velocity: {aircraft.velocity} m/s</p>
-                  <p>Status: {aircraft.on_ground ? "On Ground" : "In Air"}</p>
-                </div>
-              </Popup>
-            </Marker>
-          );
-        }
-        return null;
-      })}
+      <AircraftList />
     </MapContainer>
   );
 };
