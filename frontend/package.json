@@ -11,6 +11,8 @@
   },
   "dependencies": {
     "leaflet": "^1.9.4",
+    "primeicons": "^8.0.0",
+    "primereact": "^10.9.8",
     "react": "^19.0.0-rc.1",
     "react-dom": "^19.0.0-rc.1",
     "react-leaflet": "^5.0.0-rc.2"
