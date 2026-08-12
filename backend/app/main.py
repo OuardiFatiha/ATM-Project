@@ -3,6 +3,7 @@ from collections import deque, defaultdict
 
 from app.fetcher import getAircraftStates
 from app.models import AircraftState
+from app.predictor import compute_trajectories
 from fastapi import FastAPI
 from python_opensky import BoundingBox
 
@@ -65,3 +66,8 @@ async def read_aircraft(min_latitude: float, max_latitude: float, min_longitude:
     # return states
     
     return [states[-1] for states in aircraft_history.values() if states]
+
+@app.get("/api/aircraft/trajectories")
+async def read_aircraft_trajectories():
+    trajectories = compute_trajectories(aircraft_history)
+    return trajectories
