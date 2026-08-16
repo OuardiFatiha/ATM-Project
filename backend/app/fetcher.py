@@ -3,10 +3,12 @@ from python_opensky import OpenSky, BoundingBox, StatesResponse
 
 async def getAircraftStates(bbox: BoundingBox):
     api = OpenSky()
-    # bbox = (min latitude, max latitude, min longitude, max longitude)
-    states: StatesResponse = await api.get_states(bounding_box=bbox)
-    aircraft_states_list = parseAircraftStates(states)
-    return aircraft_states_list
+    try:
+        states: StatesResponse = await api.get_states(bounding_box=bbox)
+        aircraft_states_list = parseAircraftStates(states)
+        return aircraft_states_list
+    finally:
+        await api.close()
 
 def parseAircraftStates(states: StatesResponse):
     aircraft_states_list = []
