@@ -4,6 +4,7 @@ import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet"
 import { useMap } from "react-leaflet/hooks"
 import type { LatLng, LocationEvent } from "leaflet"
 import { AircraftList } from "./AircraftList"
+import { AircraftTrajectories } from "./AircraftTrajectories"
 
 function LocationMarker() {
   const [position, setPosition] = useState<LatLng | null>(null)
@@ -54,6 +55,7 @@ export const MapView = () => {
       <MapResizeFix />
       <LocationMarker />
       <AircraftList />
+      <AircraftTrajectories />
     </MapContainer>
   );
 };

@@ -5,7 +5,7 @@ def compute_trajectories(aircraft_history):
     Compute the predicted trajectories for all aircraft in the aircraft_history.
 
     Returns:
-    dict: A dictionary where keys are the icao24 of aircraft and values are lists of predicted positions.
+    list: A list of lists of predicted positions.
     """
     trajectories = []
     last_states = [states[-1] for states in aircraft_history.values() if states]
