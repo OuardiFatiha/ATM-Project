@@ -30,9 +30,6 @@ async def poll_aircraft_states():
                     aircraft_history[s.icao24].append(s)
         except Exception as e:
             print("poll error:", e)
-            print(f"poll error type: {type(e).__name__}")
-            print(f"poll error: {e!r}")
-            print(f"underlying cause: {e.__cause__!r}")
 
         await asyncio.sleep(10)
 
