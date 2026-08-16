@@ -21,7 +21,10 @@ def compute_trajectories(aircraft_history):
                     t * 30
                 )
                 predicted_positions.append([predicted_lat, predicted_lon])
-            trajectories.append(predicted_positions)
+            trajectories.append({
+                "icao24": last_state.icao24,
+                "positions": predicted_positions
+            })
     return trajectories
 
 def predict_position(lat, lon, heading_deg, speed_ms, t_seconds):

@@ -30,6 +30,9 @@ async def poll_aircraft_states():
                     aircraft_history[s.icao24].append(s)
         except Exception as e:
             print("poll error:", e)
+            print(f"poll error type: {type(e).__name__}")
+            print(f"poll error: {e!r}")
+            print(f"underlying cause: {e.__cause__!r}")
 
         await asyncio.sleep(10)
 
@@ -54,20 +57,9 @@ async def read_root():
     return {"Hello": "World"}
 
 @app.get("/api/aircraft/all")
-async def read_aircraft(min_latitude: float, max_latitude: float, min_longitude: float, max_longitude: float):
-    # bounding_box = BoundingBox(
-    #     min_latitude=min_latitude,
-    #     max_latitude=max_latitude,
-    #     min_longitude=min_longitude,
-    #     max_longitude=max_longitude
-    # )
-    # # Fetch aircraft states from the OpenSky API
-    # states = await getAircraftStates(bounding_box)
-    # return states
-    
+async def read_aircraft(min_latitude: float, max_latitude: float, min_longitude: float, max_longitude: float):    
     return [states[-1] for states in aircraft_history.values() if states]
 
 @app.get("/api/aircraft/trajectories")
 async def read_aircraft_trajectories():
-    trajectories = compute_trajectories(aircraft_history)
-    return trajectories
+    return compute_trajectories(aircraft_history)
