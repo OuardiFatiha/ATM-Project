@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import type { AircraftState } from "../types/AircraftState";
 
 export const useAircraftStates = () => {
-    const URL = "/api/aircraft/all?min_latitude=48.8&max_latitude=49.0&min_longitude=2.2&max_longitude=2.5";
+    const URL = "/api/aircraft/all";
     const [aircraftStates, setAircraftStates] = useState<AircraftState[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
