@@ -7,7 +7,7 @@ from app.fetcher import getAircraftStates
 from app.models import AircraftState
 from app.predictor import compute_trajectories
 from app.opensky_auth import OpenSkyTokenManager
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 
 app = FastAPI()
 
@@ -16,6 +16,8 @@ aircraft_history: dict[str, deque[AircraftState]] = defaultdict(lambda: deque(ma
 poller_task: asyncio.Task | None = None
 http_session: aiohttp.ClientSession | None = None
 token_manager: OpenSkyTokenManager | None = None
+rate_limited_until: float | None = None  # monotonic timestamp
+
 # BBox fixe (zone surveillee)
 TRACK_BBOX = {
     "min_latitude": 43.0,
@@ -25,15 +27,23 @@ TRACK_BBOX = {
 }
 
 async def poll_aircraft_states():
+    global rate_limited_until
     while True:
         try:
             states = await getAircraftStates(http_session, token_manager, TRACK_BBOX)
             for s in states:
                 if s.icao24:
                     aircraft_history[s.icao24].append(s)
+        except aiohttp.ClientResponseError as e:
+            if e.status == 429:
+                retry_after = int(e.headers.get("X-Rate-Limit-Retry-After-Seconds", 60))
+                rate_limited_until = asyncio.get_event_loop().time() + retry_after
+                print(f"rate limited, backing off {retry_after}s")
+                await asyncio.sleep(retry_after)
+                continue
+            print("poll error:", e)
         except Exception as e:
             print("poll error:", e)
-
         await asyncio.sleep(10)
 
 @app.on_event("startup")
@@ -66,7 +76,9 @@ async def read_root():
     return {"Hello": "World"}
 
 @app.get("/api/aircraft/all")
-async def read_aircraft():    
+async def read_aircraft(): 
+    if rate_limited_until and asyncio.get_event_loop().time() < rate_limited_until:
+            raise HTTPException(status_code=429, detail="OpenSky rate limit exceeded, try again later")  
     return [states[-1] for states in aircraft_history.values() if states]
 
 @app.get("/api/aircraft/trajectories")

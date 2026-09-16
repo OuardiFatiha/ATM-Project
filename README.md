@@ -7,10 +7,13 @@ The frontend displays flight information in a 2D Leaflet map.
 
 ## Backend
 ### Configure OpenSky API credentials
-Go to https://opensky-network.org/, create an accound and download credentials, then copy then in .env file as follows:
+- Go to https://opensky-network.org/, create an accound and download credentials.
+- Create a .env file in the backend repository.
+- Copy your credentials to the .env file as follows:
 
-`OPENSKY_CLIENT_ID=fouardi-api-client
-OPENSKY_CLIENT_SECRET=<your secret>`
+`OPENSKY_CLIENT_ID=<your client id>`
+<br>
+`OPENSKY_CLIENT_SECRET=<your secret>`
 ### Luanch backend API
 The backend is a FastAPI api.
 To launch the backend api:
