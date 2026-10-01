@@ -1,7 +1,8 @@
 import { MapView } from './components/MapView'
+import { RightPanel } from './components/RightPanel';
+import { LeftPanel } from './components/LeftPanel';
 import { Button } from 'primereact/button';
 import { Toolbar } from 'primereact/toolbar';
-import { RightPanel } from './components/RightPanel';
 import { useState } from 'react';
 import logo from './assets/logo.png';
 
@@ -24,7 +25,10 @@ function App() {
     >
       <Toolbar start={toolbarStart} end={toolbarEnd} style={{ padding: '4px 12px', height: '80px' }} />
       <RightPanel visible={visible} setVisible={setVisible} />
-      <MapView />
+      <div style={{ height: '100%', display: 'flex', flexDirection: 'row' }}>
+        <LeftPanel />
+        <MapView />
+      </div>
     </div>
   )
 }

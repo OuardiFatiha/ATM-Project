@@ -2,12 +2,13 @@ import asyncio
 import os
 import aiohttp
 from collections import deque, defaultdict
+from fastapi import FastAPI, HTTPException
 
 from app.fetcher import getAircraftStates
 from app.models import AircraftState
 from app.predictor import compute_trajectories
 from app.opensky_auth import OpenSkyTokenManager
-from fastapi import FastAPI, HTTPException
+from app.conflict import detect_conflicts
 
 app = FastAPI()
 
@@ -17,6 +18,8 @@ poller_task: asyncio.Task | None = None
 http_session: aiohttp.ClientSession | None = None
 token_manager: OpenSkyTokenManager | None = None
 rate_limited_until: float | None = None  # monotonic timestamp
+latest_trajectories = []
+latest_conflicts = []
 
 # BBox fixe (zone surveillee)
 TRACK_BBOX = {
@@ -30,10 +33,23 @@ async def poll_aircraft_states():
     global rate_limited_until
     while True:
         try:
-            states = await getAircraftStates(http_session, token_manager, TRACK_BBOX)
-            for s in states:
-                if s.icao24:
-                    aircraft_history[s.icao24].append(s)
+            states = await getAircraftStates(
+                http_session,
+                token_manager,
+                TRACK_BBOX,
+            )
+
+            for state in states:
+                if state.icao24:
+                    aircraft_history[state.icao24].append(state)
+
+            # Un seul calcul à chaque actualisation OpenSky.
+            trajectories = compute_trajectories(aircraft_history)
+            conflicts = detect_conflicts(trajectories)
+
+            # Remplacement atomique des snapshots.
+            latest_trajectories[:] = trajectories
+            latest_conflicts[:] = conflicts
         except aiohttp.ClientResponseError as e:
             if e.status == 429:
                 retry_after = int(e.headers.get("X-Rate-Limit-Retry-After-Seconds", 60))
@@ -83,4 +99,9 @@ async def read_aircraft():
 
 @app.get("/api/aircraft/trajectories")
 async def read_aircraft_trajectories():
-    return compute_trajectories(aircraft_history)
+    return latest_trajectories
+
+@app.get("/api/aircraft/conflicts")
+async def read_aircraft_conflicts():
+    return latest_conflicts
+
