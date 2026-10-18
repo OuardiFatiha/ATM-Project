@@ -31,6 +31,8 @@ class TrajectoryPrediction(BaseModel):
 class ConflictAlert(BaseModel):
     icao24_1: str
     icao24_2: str
+    callsign_1: str | None
+    callsign_2: str | None
     time_to_conflict_s: int
     horizontal_dist_nm: float
     vertical_dist_ft: float

@@ -5,6 +5,8 @@ The backend API connects to [OpenSky API](https://opensky-network.org/data/api) 
 
 The frontend displays flight information in a 2D Leaflet map.
 
+![Application](/doc/img/app_snapshot.png)
+![Application Right Panel](/doc/img/app_right_panel.png)
 ## Backend
 ### Configure OpenSky API credentials
 - Go to https://opensky-network.org/, create an accound and download credentials.

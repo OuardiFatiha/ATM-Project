@@ -1,30 +1,61 @@
 import math
 
 def compute_trajectories(aircraft_history):
-    """
-    Compute the predicted trajectories for all aircraft in the aircraft_history.
-
-    Returns:
-    list: A list of lists of predicted positions.
-    """
     trajectories = []
-    last_states = [states[-1] for states in aircraft_history.values() if states]
-    for last_state in last_states:
-        if last_state:
-            predicted_positions = [[last_state.latitude, last_state.longitude]]  # Start with the last known position
-            for t in range(1, 11):  # Predict for the next 30, 60, ..., 300 seconds (10 steps)
-                predicted_lat, predicted_lon = predict_position(
-                    last_state.latitude,
-                    last_state.longitude,
-                    last_state.true_track,
-                    last_state.velocity,
-                    t * 30
-                )
-                predicted_positions.append([predicted_lat, predicted_lon])
-            trajectories.append({
-                "icao24": last_state.icao24,
-                "positions": predicted_positions
+
+    for states in aircraft_history.values():
+        if not states:
+            continue
+
+        state = states[-1]
+        required = (
+            state.latitude,
+            state.longitude,
+            state.true_track,
+            state.velocity,
+        )
+        if any(value is None for value in required):
+            continue
+
+        altitude_m = (
+            state.geo_altitude
+            if state.geo_altitude is not None
+            else state.barometric_altitude
+        )
+        if altitude_m is None:
+            continue
+
+        vertical_rate_ms = state.vertical_rate or 0.0
+        predicted_points = []
+
+        for time_offset_s in range(0, 301, 30):
+            latitude, longitude = predict_position(
+                state.latitude,
+                state.longitude,
+                state.true_track,
+                state.velocity,
+                time_offset_s,
+            )
+
+            predicted_points.append({
+                "latitude": latitude,
+                "longitude": longitude,
+                "altitude": altitude_m + vertical_rate_ms * time_offset_s,
+                "t_offset_s": time_offset_s,
             })
+
+        callsign = (state.callsign or "").strip() or None
+        trajectories.append({
+            "icao24": state.icao24,
+            "callsign": callsign,
+            # Preserves compatibility with the current frontend.
+            "positions": [
+                [point["latitude"], point["longitude"]]
+                for point in predicted_points
+            ],
+            "predicted_points": predicted_points,
+        })
+
     return trajectories
 
 def predict_position(lat, lon, heading_deg, speed_ms, t_seconds):
