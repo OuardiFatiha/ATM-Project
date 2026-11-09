@@ -1,11 +1,13 @@
 import { Panel } from 'primereact/panel';
-import { useAircraftStates } from '../hooks/useAircraftStates';
+import { useLiveFeedContext } from '../context/LiveFeedContext';
 import { DataTable } from 'primereact/datatable';
 import { Column } from 'primereact/column';
 import type { AircraftState } from '../types/AircraftState';
 
 export const LeftPanel = () => {
-    const { aircraftStates } = useAircraftStates();
+    const { liveSnapshot } = useLiveFeedContext();
+    const aircraftStates = liveSnapshot?.states ?? [];
+
     const verticalRateBody = (aircraft: AircraftState) => {
         const rate = aircraft.vertical_rate;
 

@@ -5,9 +5,11 @@ import { Button } from 'primereact/button';
 import { Toolbar } from 'primereact/toolbar';
 import { useState } from 'react';
 import logo from './assets/logo.png';
+import { LiveFeedProvider } from './context/LiveFeedProvider';
 
 function App() {
   const [visible, setVisible] = useState(false);
+
   const toolbarStart = <img alt="Flight Viewer" src={logo} height="40" style={{ display: 'block', mixBlendMode: 'multiply' }} />;
   const toolbarEnd = (
     <Button
@@ -19,17 +21,19 @@ function App() {
   );
 
   return (
-    <div
-      className="App"
-      style={{ width: '100%', height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}
-    >
-      <Toolbar start={toolbarStart} end={toolbarEnd} style={{ padding: '4px 12px', height: '80px' }} />
-      <RightPanel visible={visible} setVisible={setVisible} />
-      <div style={{ height: '100%', display: 'flex', flexDirection: 'row' }}>
-        <LeftPanel />
-        <MapView />
+    <LiveFeedProvider>
+      <div
+        className="App"
+        style={{ width: '100%', height: '100%', overflow: 'hidden', display: 'flex', flexDirection: 'column' }}
+      >
+        <Toolbar start={toolbarStart} end={toolbarEnd} style={{ padding: '4px 12px', height: '80px' }} />
+        <RightPanel visible={visible} setVisible={setVisible} />
+        <div style={{ height: '100%', display: 'flex', flexDirection: 'row' }}>
+          <LeftPanel />
+          <MapView />
+        </div>
       </div>
-    </div>
+    </LiveFeedProvider>
   )
 }
 

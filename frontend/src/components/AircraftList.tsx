@@ -1,12 +1,12 @@
-import { useAircraftStates } from "../hooks/useAircraftStates";
 import { AircraftDetail } from "./AircraftDetail";
-import { useTrajectories } from "../hooks/useTrajectories";
 import { useEffect, useMemo, useRef } from "react";
 import { Toast } from "primereact/toast";
+import { useLiveFeedContext } from "../context/LiveFeedContext";
 
 export const AircraftList = () => {
-    const { aircraftStates, error } = useAircraftStates();
-    const { trajectories } = useTrajectories();
+    const { liveSnapshot, error } = useLiveFeedContext();
+    const aircraftStates = liveSnapshot?.states ?? [];
+    const trajectories = useMemo(() => liveSnapshot?.trajectories ?? [], [liveSnapshot?.trajectories]);
     const toast = useRef<Toast>(null);
 
 

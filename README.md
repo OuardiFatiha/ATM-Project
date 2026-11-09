@@ -1,5 +1,5 @@
-# Flgiht Viewer
-The aim is this project is to visualize flight information on map.
+# Flight Viewer
+The aim of this project is to visualize flight information on map.
 
 The backend API connects to [OpenSky API](https://opensky-network.org/data/api) to get ADS-B flight information.
 
@@ -16,7 +16,7 @@ The frontend displays flight information in a 2D Leaflet map.
 `OPENSKY_CLIENT_ID=<your client id>`
 <br>
 `OPENSKY_CLIENT_SECRET=<your secret>`
-### Luanch backend API
+### Launch backend API
 The backend is a FastAPI api.
 To launch the backend api:
 
@@ -28,6 +28,13 @@ To launch the backend api:
  
 go to *http://localhost:8000/*
 to test sending a request you can type: *http://localhost:8000/api/aircraft/all*
+
+### Run unit tests
+Execute the following commands:
+
+`cd backend`
+
+`docker run --rm -v "$PWD":/repo -w /repo python:3.11 sh -c "pip install -q -r requirements.txt && python -m unittest tests.conflict_ut -v"`
 
 ## Frontend
 The frontend is a React app.
