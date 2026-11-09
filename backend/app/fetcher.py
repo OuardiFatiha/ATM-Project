@@ -15,9 +15,8 @@ async def getAircraftStates(session: aiohttp.ClientSession, tokens: OpenSkyToken
     }
     async with session.get(
         STATES_URL,
-        headers={"Authorization": f"Bearer {token}"},
-        params=params,
-        ssl=False,
+        headers={"Authorization": "Bearer " + token},
+        params=params
     ) as resp:
         resp.raise_for_status()
         data = await resp.json()

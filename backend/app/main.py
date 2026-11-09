@@ -2,7 +2,10 @@ import asyncio
 import os
 import aiohttp
 from collections import deque, defaultdict
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, WebSocket
+from contextlib import asynccontextmanager
+
+from fastapi.encoders import jsonable_encoder
 
 from app.fetcher import getAircraftStates
 from app.models import AircraftState
@@ -29,13 +32,41 @@ TRACK_BBOX = {
     "max_longitude": 8.0,
 }
 
-async def poll_aircraft_states():
-    global rate_limited_until
+# WebSocket condition and version for live updates
+version = 0
+snapshot_cond = asyncio.Condition()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    global poller_task, http_session, token_manager
+    connector = aiohttp.TCPConnector(ssl=False)
+    http_session = aiohttp.ClientSession(connector=connector)
+    token_manager = OpenSkyTokenManager(
+        os.environ["OPENSKY_CLIENT_ID"],
+        os.environ["OPENSKY_CLIENT_SECRET"],
+    )
+    poller_task = asyncio.create_task(poll_aircraft_states(http_session, token_manager))
+
+    yield  # l'application sert les requêtes ici
+
+    if poller_task:
+        poller_task.cancel()
+        try:
+            await poller_task
+        except asyncio.CancelledError:
+            pass
+    if http_session:
+        await http_session.close()
+
+app = FastAPI(lifespan=lifespan)
+
+async def poll_aircraft_states(session: aiohttp.ClientSession, tokens: OpenSkyTokenManager):
+    global rate_limited_until, version
     while True:
         try:
             states = await getAircraftStates(
-                http_session,
-                token_manager,
+                session,
+                tokens,
                 TRACK_BBOX,
             )
 
@@ -48,11 +79,16 @@ async def poll_aircraft_states():
             conflicts = detect_conflicts(trajectories)
 
             # Remplacement atomique des snapshots.
-            latest_trajectories[:] = trajectories
-            latest_conflicts[:] = conflicts
+            async with snapshot_cond:
+                latest_trajectories[:] = trajectories
+                latest_conflicts[:] = conflicts
+                version += 1
+                snapshot_cond.notify_all()
+
         except aiohttp.ClientResponseError as e:
             if e.status == 429:
-                retry_after = int(e.headers.get("X-Rate-Limit-Retry-After-Seconds", 60))
+                headers = e.headers or {}
+                retry_after = int(headers.get("X-Rate-Limit-Retry-After-Seconds", 60))
                 rate_limited_until = asyncio.get_event_loop().time() + retry_after
                 print(f"rate limited, backing off {retry_after}s")
                 await asyncio.sleep(retry_after)
@@ -61,31 +97,6 @@ async def poll_aircraft_states():
         except Exception as e:
             print("poll error:", e)
         await asyncio.sleep(10)
-
-@app.on_event("startup")
-async def startup_event():
-    global poller_task, http_session, token_manager
-    # Configure the connector to skip SSL validation globally for this session
-    connector = aiohttp.TCPConnector(ssl=False)
-    http_session = aiohttp.ClientSession(connector=connector)
-    token_manager = OpenSkyTokenManager(
-        os.environ["OPENSKY_CLIENT_ID"],
-        os.environ["OPENSKY_CLIENT_SECRET"],
-    )
-    poller_task = asyncio.create_task(poll_aircraft_states())
-
-@app.on_event("shutdown")
-async def shutdown_event():
-    global poller_task, http_session
-    if poller_task:
-        poller_task.cancel()
-        try:
-            await poller_task
-        except asyncio.CancelledError:
-            pass
-    if http_session:
-        await http_session.close()
-
 
 @app.get("/api")
 async def read_root():
@@ -105,3 +116,17 @@ async def read_aircraft_trajectories():
 async def read_aircraft_conflicts():
     return latest_conflicts
 
+@app.websocket("/ws/live")
+async def live(ws: WebSocket):
+    await ws.accept()
+    last_sent = -1
+    while True:
+        async with snapshot_cond:
+            await snapshot_cond.wait_for(lambda: version != last_sent)
+            current = version
+        await ws.send_json(jsonable_encoder({
+            "states": [states[-1] for states in aircraft_history.values() if states],
+            "trajectories": latest_trajectories,
+            "conflicts": latest_conflicts,
+        }))
+        last_sent = current

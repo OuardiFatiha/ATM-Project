@@ -12,8 +12,6 @@ interface AircraftDetailProps {
 }
 
 export const AircraftDetail = ({ aircraft, trajectory }: AircraftDetailProps) => {
-
-
     const aircraftColor = useMemo(() => {
         return (): string => {
             const heading = ((aircraft.true_track ?? 0) % 360 + 360) % 360;
