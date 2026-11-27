@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import type { Conflict } from "../types/Conflict";
+import { API_BASE } from "../config";
 
 export const useConflicts = () => {
-    const URL = "/api/aircraft/conflicts";
+    const URL = `${API_BASE}/api/aircraft/conflicts`;
     const [conflicts, setConflicts] = useState<Conflict[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
@@ -44,7 +45,7 @@ export const useConflicts = () => {
                 window.clearTimeout(timeoutId);
             }
         };
-    }, []);
+    }, [URL]);
 
     return { conflicts, loading, error };
 };
