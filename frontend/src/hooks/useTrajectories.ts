@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import type { Trajectory } from "../types/Trajectory";
+import { API_BASE } from "../config";
 
 export const useTrajectories = () => {
-    const URL = "/api/aircraft/trajectories";
+    const URL = `${API_BASE}/api/aircraft/trajectories`;
     const [trajectories, setTrajectories] = useState<Trajectory[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
@@ -44,7 +45,7 @@ export const useTrajectories = () => {
                 window.clearTimeout(timeoutId);
             }
         };
-    }, []);
+    }, [URL]);
 
     return { trajectories, loading, error };
 };

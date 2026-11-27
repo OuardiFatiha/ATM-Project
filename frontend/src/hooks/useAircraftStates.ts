@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import type { AircraftState } from "../types/AircraftState";
+import { API_BASE } from "../config";
 
 export const useAircraftStates = () => {
-    const URL = "/api/aircraft/all";
+    const URL = `${API_BASE}/api/aircraft/all`;
     const [aircraftStates, setAircraftStates] = useState<AircraftState[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
@@ -50,7 +51,7 @@ export const useAircraftStates = () => {
                 window.clearTimeout(timeoutId);
             }
         };
-    }, []);
+    }, [URL]);
 
     return { aircraftStates, loading, error };
 };

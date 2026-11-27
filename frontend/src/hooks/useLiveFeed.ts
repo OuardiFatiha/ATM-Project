@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { LiveSnapshot } from "../types/LiveSnapshot";
-
+import { WS_BASE } from "../config";
 export const useLiveFeed = () => {
     const [liveSnapshot, setLiveSnapshot] = useState<LiveSnapshot | null>(null);
     const [connected, setConnected] = useState(false);
@@ -14,7 +14,8 @@ export const useLiveFeed = () => {
 
         const connect = () => {
             const protocol = window.location.protocol === "https:" ? "wss" : "ws";
-            socket = new WebSocket(`${protocol}://${window.location.host}/ws/live`);
+            const wsBase = WS_BASE || `${protocol}://${window.location.host}`;
+            socket = new WebSocket(`${wsBase}/ws/live`);
 
             socket.onopen = () => {
                 retryDelay = 1_000;

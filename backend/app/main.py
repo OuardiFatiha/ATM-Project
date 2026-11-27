@@ -3,6 +3,7 @@ import os
 import aiohttp
 from collections import deque, defaultdict
 from fastapi import FastAPI, HTTPException, WebSocket
+from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 from fastapi.encoders import jsonable_encoder
@@ -14,6 +15,13 @@ from app.opensky_auth import OpenSkyTokenManager
 from app.conflict import detect_conflicts
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[os.environ.get("FRONTEND_ORIGIN", "http://localhost:5173")],
+    allow_methods=["GET"],
+    allow_headers=["*"],
+)
 
 # icao24 -> 10 derniers AircraftState
 aircraft_history: dict[str, deque[AircraftState]] = defaultdict(lambda: deque(maxlen=10))
